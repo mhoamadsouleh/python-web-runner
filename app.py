@@ -1,59 +1,55 @@
-from flask import Flask, render_template, request, redirect, url_for
 import os
 import subprocess
-import signal
+from flask import Flask, request, render_template, redirect, url_for
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-# لتخزين العمليات النشطة
-running_processes = {}
+processes = {}
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/', methods=['POST'])
+@app.route('/upload', methods=['POST'])
 def upload_file():
-    if 'file' not in request.files:
-        return "لا يوجد ملف"
     file = request.files['file']
-    if file.filename == '':
-        return "لم يتم اختيار أي ملف"
-    filepath = os.path.join(UPLOAD_FOLDER, file.filename)
-    file.save(filepath)
-    return redirect(url_for('list_files'))
+    if file and file.filename.endswith('.py'):
+        filepath = os.path.join(UPLOAD_FOLDER, file.filename)
+        file.save(filepath)
+    return redirect(url_for('manage'))
 
-@app.route('/files')
-def list_files():
+@app.route('/manage')
+def manage():
     files = os.listdir(UPLOAD_FOLDER)
-    return render_template('files.html', files=files)
+    return render_template('manage.html', files=files, processes=processes)
 
-@app.route('/run/<filename>', methods=['POST'])
-def run_file(filename):
+@app.route('/run/<filename>')
+def run_script(filename):
+    path = os.path.join(UPLOAD_FOLDER, filename)
+    if filename in processes:
+        return redirect(url_for('manage'))
+    proc = subprocess.Popen(['python3', path])
+    processes[filename] = proc
+    return redirect(url_for('manage'))
+
+@app.route('/stop/<filename>')
+def stop_script(filename):
+    proc = processes.get(filename)
+    if proc:
+        proc.terminate()
+        processes.pop(filename)
+    return redirect(url_for('manage'))
+
+@app.route('/delete/<filename>')
+def delete_script(filename):
     filepath = os.path.join(UPLOAD_FOLDER, filename)
-    if filename not in running_processes:
-        process = subprocess.Popen(['python3', filepath])
-        running_processes[filename] = process
-    return redirect(url_for('list_files'))
-
-@app.route('/stop/<filename>', methods=['POST'])
-def stop_file(filename):
-    process = running_processes.get(filename)
-    if process:
-        os.kill(process.pid, signal.SIGTERM)
-        del running_processes[filename]
-    return redirect(url_for('list_files'))
-
-@app.route('/delete/<filename>', methods=['POST'])
-def delete_file(filename):
-    filepath = os.path.join(UPLOAD_FOLDER, filename)
-    if filename in running_processes:
-        stop_file(filename)
+    if filename in processes:
+        processes[filename].terminate()
+        processes.pop(filename)
     if os.path.exists(filepath):
         os.remove(filepath)
-    return redirect(url_for('list_files'))
+    return redirect(url_for('manage'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
