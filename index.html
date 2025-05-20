@@ -1,17 +1,66 @@
-
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <title>رفع ملف بايثون</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px;
+            color: #333;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        form {
+            background: #fff;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        input[type="file"] {
+            display: block;
+            margin-bottom: 15px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .nav {
+            margin-bottom: 30px;
+        }
+        .nav a {
+            text-decoration: none;
+            margin: 0 10px;
+            color: #555;
+            font-weight: bold;
+        }
+        .nav a:hover {
+            color: #000;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 text-center p-10">
-    <h1 class="text-3xl font-bold mb-4">ارفع ملفك بايثون</h1>
-    <form method="POST" enctype="multipart/form-data" class="space-y-4">
-        <input type="file" name="file" class="block mx-auto p-2 border border-gray-300 rounded" required>
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">رفع الملف</button>
+<body>
+    <div class="nav">
+        <a href="/">الرئيسية</a>
+        <a href="/files">الملفات</a>
+    </div>
+    <h1>ارفع ملف بايثون</h1>
+    <form method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".py" required>
+        <button type="submit">رفع الملف</button>
     </form>
-    <a href="/files" class="block mt-6 text-blue-500 hover:underline">إدارة الملفات</a>
 </body>
 </html>
