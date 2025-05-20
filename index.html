@@ -1,0 +1,17 @@
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>رفع ملف بايثون</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-center p-10">
+    <h1 class="text-3xl font-bold mb-4">ارفع ملفك بايثون</h1>
+    <form method="POST" enctype="multipart/form-data" class="space-y-4">
+        <input type="file" name="file" class="block mx-auto p-2 border border-gray-300 rounded" required>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">رفع الملف</button>
+    </form>
+    <a href="/files" class="block mt-6 text-blue-500 hover:underline">إدارة الملفات</a>
+</body>
+</html>
