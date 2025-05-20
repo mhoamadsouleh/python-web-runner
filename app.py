@@ -1,50 +1,59 @@
-
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for
 import os
 import subprocess
+import signal
 
 app = Flask(__name__)
-UPLOAD_FOLDER = "uploads"
+UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# لتخزين العمليات النشطة
 running_processes = {}
 
-@app.route("/", methods=["GET", "POST"])
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/', methods=['POST'])
 def upload_file():
-    if request.method == "POST":
-        f = request.files["file"]
-        if f and f.filename.endswith(".py"):
-            file_path = os.path.join(UPLOAD_FOLDER, f.filename)
-            f.save(file_path)
-            return redirect(url_for("manage_files"))
-    return render_template("index.html")
+    if 'file' not in request.files:
+        return "لا يوجد ملف"
+    file = request.files['file']
+    if file.filename == '':
+        return "لم يتم اختيار أي ملف"
+    filepath = os.path.join(UPLOAD_FOLDER, file.filename)
+    file.save(filepath)
+    return redirect(url_for('list_files'))
 
-@app.route("/files")
-def manage_files():
+@app.route('/files')
+def list_files():
     files = os.listdir(UPLOAD_FOLDER)
-    return render_template("files.html", files=files, running=running_processes)
+    return render_template('files.html', files=files)
 
-@app.route("/run/<filename>")
+@app.route('/run/<filename>', methods=['POST'])
 def run_file(filename):
-    file_path = os.path.join(UPLOAD_FOLDER, filename)
-    if filename in running_processes and running_processes[filename].poll() is None:
-        return redirect(url_for("manage_files"))
-    process = subprocess.Popen(["python3", file_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    running_processes[filename] = process
-    return redirect(url_for("manage_files"))
+    filepath = os.path.join(UPLOAD_FOLDER, filename)
+    if filename not in running_processes:
+        process = subprocess.Popen(['python3', filepath])
+        running_processes[filename] = process
+    return redirect(url_for('list_files'))
 
-@app.route("/stop/<filename>")
+@app.route('/stop/<filename>', methods=['POST'])
 def stop_file(filename):
     process = running_processes.get(filename)
-    if process and process.poll() is None:
-        process.terminate()
-    return redirect(url_for("manage_files"))
+    if process:
+        os.kill(process.pid, signal.SIGTERM)
+        del running_processes[filename]
+    return redirect(url_for('list_files'))
 
-@app.route("/delete/<filename>")
+@app.route('/delete/<filename>', methods=['POST'])
 def delete_file(filename):
-    stop_file(filename)
-    os.remove(os.path.join(UPLOAD_FOLDER, filename))
-    running_processes.pop(filename, None)
-    return redirect(url_for("manage_files"))
+    filepath = os.path.join(UPLOAD_FOLDER, filename)
+    if filename in running_processes:
+        stop_file(filename)
+    if os.path.exists(filepath):
+        os.remove(filepath)
+    return redirect(url_for('list_files'))
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
